@@ -7,6 +7,7 @@ from lbm.src.core.lattice  import *
 from lbm.src.core.obstacle import *
 from lbm.src.utils.buff    import *
 from lbm.src.plot.plot     import *
+from matplotlib.widgets import Button
 
 ###############################################
 ### Interactive simulation
@@ -37,8 +38,11 @@ class interactive(base_app):
         self.dpi         = 200
         
         self.plt         = plt
-        self.clickhandle = self.plt.connect('button_press_event', self.on_click)
-        self.running     = True
+        self.running     = False
+        self.buttonax    = self.plt.gcf().add_axes([0.7, 0.05, 0.1, 0.075])
+        self.pausebutton = Button(self.buttonax, 'Start')
+        self.clickhandle = self.plt.connect('button_press_event', self.on_fig_click)
+
 
         # Deduce remaining lbm parameters
         self.compute_lbm_parameters()
@@ -52,10 +56,19 @@ class interactive(base_app):
             obs = obstacle('array', 4, 100,
                            'square', self.r_obs, pos)
             self.obstacles.append(obs)
-        plt.pause(0.001)
 
     def on_click(self, event):
         self.running = not self.running
+        if self.running:
+            self.pausebutton.label.set_text("Pause")
+        else:
+            self.pausebutton.label.set_text("Continue")
+            
+    def on_fig_click(self, event):
+        print("fig click")
+        if not self.running:
+            pass
+            
     
     ### Compute remaining lbm parameters
     def compute_lbm_parameters(self):
@@ -77,6 +90,9 @@ class interactive(base_app):
 
     ### Add obstacles and initialize fields
     def initialize(self, lattice):
+        self.plt.gcf().add_axes([0, 0.05, 1, 1])
+        self.pausebutton.on_clicked(self.on_click)
+        plt.pause(0.001)
 
         # Add obstacles to lattice
         self.add_obstacles(lattice, self.obstacles)
