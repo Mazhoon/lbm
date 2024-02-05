@@ -70,8 +70,9 @@ class interactive(base_app):
                 xran = self.x_max - self.x_min
                 yran = self.y_max - self.y_min
                 size = [640, 480] #plt.figure().get_size_inches()*plt.figure().dpi
-                pos = [self.x_min+(event.xdata/size[0])*(xran), self.y_min+(event.ydata/size[1])*(yran)]
-                print(xran, yran, event.x, event.y, pos, size)
+                pos = self.latticeax.transAxes.inverted().transform([event.x, event.y])
+                pos = [self.x_min + pos[0]*xran, self.y_min +pos[1]*yran]
+
                 obs = obstacle('interactive'+str(len(self.obstacles)), 4, 100,
                             'square', 0.1, pos)
                 self.obstacles.append(obs)
@@ -118,7 +119,7 @@ class interactive(base_app):
     ### Add obstacles and initialize fields
     def initialize(self, lattice):
         self.lat = lattice
-        self.latticeax = self.plt.gcf().add_axes([0, 0.05, 1, 1], label="latticedisplay")
+        self.latticeax = self.plt.gcf().add_axes([0, 0, 1, 1], label="latticedisplay")
         self.pausebutton.on_clicked(self.on_click)
         plt.pause(0.001)
         self.after_canvas_init()
