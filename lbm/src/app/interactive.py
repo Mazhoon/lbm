@@ -65,19 +65,20 @@ class interactive(base_app):
     def on_fig_click(self, event):
         print("fig click")
         if not self.running:
-            if event.button is MouseButton.LEFT:
+            if event.button is MouseButton.RIGHT:
                 radius = 0.5
                 xran = self.x_max - self.x_min
                 yran = self.y_max - self.y_min
                 size = [640, 480] #plt.figure().get_size_inches()*plt.figure().dpi
                 pos = [self.x_min+(event.xdata/size[0])*(xran), self.y_min+(event.ydata/size[1])*(yran)]
                 print(xran, yran, event.x, event.y, pos, size)
-                obs = obstacle('interactive', 4, 100,
+                obs = obstacle('interactive'+str(len(self.obstacles)), 4, 100,
                             'square', 0.1, pos)
                 self.obstacles.append(obs)
 
-                self.add_obstacle(self.lat, obs, len(self.obstacles)+1)
+                self.add_obstacle(self.lat, obs, len(self.obstacles))
                 self.after_canvas_init()
+                self.outputs(self.lat, 0, True)
 
 
             
@@ -161,10 +162,10 @@ class interactive(base_app):
         lattice.zou_he_bottom_right_corner()
 
     ### Write outputs
-    def outputs(self, lattice, it):
+    def outputs(self, lattice, it, force=False):
 
         # Check iteration
-        if (it%self.output_freq != 0): return
+        if (it%self.output_freq != 0 and not force): return
 
         # Output field
         v = np.sqrt(lattice.u[0,:,:]**2+lattice.u[1,:,:]**2)
@@ -175,12 +176,17 @@ class interactive(base_app):
         vm = np.rot90(vm)
 
         # Plot
+        cmap = matplotlib.cm.RdBu_r
+        cmap.set_bad(color='white')
         self.plt.imshow(vm,
-               cmap = 'RdBu_r',
+               cmap = cmap,
                vmin = 0.0*lattice.u_lbm,
                vmax = 1.5*lattice.u_lbm,
                interpolation = 'spline16')
-
+        
+        
+        if force:
+            return 
         self.plt.axis('off')
         self.plt.pause(0.001)
         while self.running == False:

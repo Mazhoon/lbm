@@ -129,7 +129,7 @@ class shape:
     ### ************************************************
     ### Write image
     def generate_image(self, *args, **kwargs):
-
+        return
         # Handle optional argument
         plot_pts = kwargs.get('plot_pts',  True)
         xmin     = kwargs.get('xmin',     -1.0)
