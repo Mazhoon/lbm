@@ -169,7 +169,7 @@ class shape:
 
         plt.savefig(filename,
                     dpi=200)
-        plt.close(plt.gcf())
+        #plt.close(plt.gcf())
         plt.cla()
         trim_white(filename)
 
