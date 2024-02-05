@@ -38,6 +38,7 @@ class interactive(base_app):
         
         self.plt         = plt
         self.clickhandle = self.plt.connect('button_press_event', self.on_click)
+        self.running     = True
 
         # Deduce remaining lbm parameters
         self.compute_lbm_parameters()
@@ -54,7 +55,7 @@ class interactive(base_app):
         plt.pause(0.001)
 
     def on_click(self, event):
-        print("click")
+        self.running = not self.running
     
     ### Compute remaining lbm parameters
     def compute_lbm_parameters(self):
@@ -150,6 +151,9 @@ class interactive(base_app):
 
         self.plt.axis('off')
         self.plt.pause(0.001)
+        while self.running == False:
+            self.plt.gcf().canvas.draw_idle()
+            self.plt.gcf().canvas.start_event_loop(0.3)
 
         # Increment plotting counter
         self.output_it += 1
