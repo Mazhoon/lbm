@@ -168,6 +168,7 @@ class lattice:
         # +y     = bottom-top
         # origin = bottom left
         self.lattice = np.zeros((self.nx, self.ny))
+        self.boundaries = np.zeros((self.nx, self.ny))
 
         # Physical fields
         self.rho     = np.ones ((   self.nx, self.ny))
@@ -318,8 +319,9 @@ class lattice:
                     (pt[1] < poly_bnds[3])):
 
                     if (self.is_inside(polygon, pt)):
-                        self.lattice[i,j] = tag
-                        obs = np.append(obs, np.array([[i,j]]), axis=0)
+                        if(self.lattice[i,j] <= 0):
+                            self.lattice[i,j] = tag
+                            obs = np.append(obs, np.array([[i,j]]), axis=0)
 
         # Printings
         print('# '+str(obs.shape[0])+' locations in obstacle')
@@ -338,7 +340,9 @@ class lattice:
 
                 if ((ii > self.nx-1) or (jj > self.ny-1)): continue
                 if (not self.lattice[ii,jj]):
-                    bnd = np.append(bnd, np.array([[ii,jj,qb]]), axis=0)
+                    if(not self.boundaries[ii,jj]): # avoid duplicate boundaries to prevent computation meltdowns
+                        bnd = np.append(bnd, np.array([[ii,jj,qb]]), axis=0)
+                        self.boundaries[ii,jj]=1.0
 
         # Some cells were counted multiple times, unique-sort them
         bnd = np.unique(bnd, axis=0)
