@@ -138,16 +138,15 @@ class shape:
         ymax     = kwargs.get('ymax',      1.0)
 
         # Plot shape
-        plt.xlim([xmin,xmax])
-        plt.ylim([ymin,ymax])
-        plt.axis('off')
-        plt.gca().set_aspect('equal', adjustable='box')
-        plt.fill([xmin,xmax,xmax,xmin],
+
+        drawax = plt.gcf().add_axes([0, 0.05, 1, 1], xlim=[xmin,xmax], ylim=[ymin,ymax], label="shape-drawing-ax")
+        drawax.set_aspect('equal', adjustable='box')
+        drawax.fill([xmin,xmax,xmax,xmin],
                  [ymin,ymin,ymax,ymax],
                  color=(0.784,0.773,0.741),
                  linewidth=2.5,
                  zorder=0)
-        plt.fill(self.curve_pts[:,0],
+        drawax.fill(self.curve_pts[:,0],
                  self.curve_pts[:,1],
                  'black',
                  linewidth=0,
@@ -157,7 +156,7 @@ class shape:
         # Each point gets a different color
         colors = matplotlib.cm.ocean(np.linspace(0, 1,
                                                  self.n_control_pts))
-        plt.scatter(self.control_pts[:,0],
+        drawax.scatter(self.control_pts[:,0],
                     self.control_pts[:,1],
                     color=colors,
                     s=16,
@@ -169,8 +168,9 @@ class shape:
 
         plt.savefig(filename,
                     dpi=200)
+        plt.delaxes(drawax)
         #plt.close(plt.gcf())
-        plt.cla()
+        #plt.cla()
         trim_white(filename)
 
     ### ************************************************

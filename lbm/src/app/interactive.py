@@ -7,7 +7,10 @@ from lbm.src.core.lattice  import *
 from lbm.src.core.obstacle import *
 from lbm.src.utils.buff    import *
 from lbm.src.plot.plot     import *
+
 from matplotlib.widgets import Button
+from matplotlib.backend_bases import MouseButton
+
 
 ###############################################
 ### Interactive simulation
@@ -29,7 +32,6 @@ class interactive(base_app):
         self.stop        = 'it'
         self.obs_cv_ct   = 1.0e-3
         self.obs_cv_nb   = 1000
-        self.n_obs       = 8
         self.r_obs       = 0.1
 
         # Output parameters
@@ -39,9 +41,11 @@ class interactive(base_app):
         
         self.plt         = plt
         self.running     = False
-        self.buttonax    = self.plt.gcf().add_axes([0.7, 0.05, 0.1, 0.075])
+        self.buttonax    = self.plt.gcf().add_axes([0.7, 0.05, 0.1, 0.075], label="buttonax")
+        self.latticeax   = None
         self.pausebutton = Button(self.buttonax, 'Start')
         self.clickhandle = self.plt.connect('button_press_event', self.on_fig_click)
+        self.lat         = None
 
 
         # Deduce remaining lbm parameters
@@ -50,12 +54,6 @@ class interactive(base_app):
         # Obstacles
         radius         = 0.5
         self.obstacles = []
-        for i in range(self.n_obs):
-            pos = [radius*math.cos(2.0*math.pi*float(i)/self.n_obs),
-                   radius*math.sin(2.0*math.pi*float(i)/self.n_obs)+0.01]
-            obs = obstacle('array', 4, 100,
-                           'square', self.r_obs, pos)
-            self.obstacles.append(obs)
 
     def on_click(self, event):
         self.running = not self.running
@@ -67,7 +65,21 @@ class interactive(base_app):
     def on_fig_click(self, event):
         print("fig click")
         if not self.running:
-            pass
+            if event.button is MouseButton.LEFT:
+                radius = 0.5
+                xran = self.x_max - self.x_min
+                yran = self.y_max - self.y_min
+                size = [640, 480] #plt.figure().get_size_inches()*plt.figure().dpi
+                pos = [self.x_min+(event.xdata/size[0])*(xran), self.y_min+(event.ydata/size[1])*(yran)]
+                print(xran, yran, event.x, event.y, pos, size)
+                obs = obstacle('interactive', 4, 100,
+                            'square', 0.1, pos)
+                self.obstacles.append(obs)
+
+                self.add_obstacle(self.lat, obs, len(self.obstacles)+1)
+                self.after_canvas_init()
+
+
             
     
     ### Compute remaining lbm parameters
@@ -88,26 +100,30 @@ class interactive(base_app):
         self.it_max  = math.floor(self.t_max/self.dt)
         self.sigma   = math.floor(10*self.nx)
 
-    ### Add obstacles and initialize fields
-    def initialize(self, lattice):
-        self.plt.gcf().add_axes([0, 0.05, 1, 1])
-        self.pausebutton.on_clicked(self.on_click)
-        plt.pause(0.001)
 
-        # Add obstacles to lattice
-        self.add_obstacles(lattice, self.obstacles)
-
+    def after_canvas_init(self):
         # Initialize fields
-        self.set_inlets(lattice, 0)
-        lattice.u[:,np.where(lattice.lattice > 0.0)] = 0.0
-        lattice.rho *= self.rho_lbm
+        self.set_inlets(self.lat, 0)
+        self.lat.u[:,np.where(self.lat.lattice > 0.0)] = 0.0
+        self.lat.rho *= self.rho_lbm
 
         # Output image
-        lattice.generate_image(self.obstacles)
+        self.lat.generate_image(self.obstacles)
 
         # Compute first equilibrium
-        lattice.equilibrium()
-        lattice.g = lattice.g_eq.copy()
+        self.lat.equilibrium()
+        self.lat.g = self.lat.g_eq.copy()
+        
+    ### Add obstacles and initialize fields
+    def initialize(self, lattice):
+        self.lat = lattice
+        self.latticeax = self.plt.gcf().add_axes([0, 0.05, 1, 1], label="latticedisplay")
+        self.pausebutton.on_clicked(self.on_click)
+        plt.pause(0.001)
+        self.after_canvas_init()
+
+
+        
 
     ### Set inlet fields
     def set_inlets(self, lattice, it):
@@ -131,7 +147,7 @@ class interactive(base_app):
     def set_bc(self, lattice):
 
         # Obstacle
-        for i in range(self.n_obs):
+        for i in range(len(self.obstacles)):
             lattice.bounce_back_obstacle(self.obstacles[i])
 
         # Wall BCs

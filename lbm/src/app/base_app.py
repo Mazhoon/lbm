@@ -23,19 +23,21 @@ class base_app():
 
         pass
 
+    def add_obstacle(self, lattice, obs, tag):
+        shape = generate_shape(obs.n_pts, obs.pos,
+                                obs.type,  obs.size,
+                                obs.name,  obs.n_spts,
+                                lattice.output_dir)
+        obs.set_polygon(shape.curve_pts)
+        obs.set_tag(tag)
+        area, bnd, ibb = lattice.add_obstacle(obs)
+        obs.fill(area, bnd, ibb)
+        
     ### Add obstacles
     def add_obstacles(self, lattice, obstacles):
 
         for i in range(len(obstacles)):
-            obs   = obstacles[i]
-            shape = generate_shape(obs.n_pts, obs.pos,
-                                   obs.type,  obs.size,
-                                   obs.name,  obs.n_spts,
-                                   lattice.output_dir)
-            obstacles[i].set_polygon(shape.curve_pts)
-            obstacles[i].set_tag(i+1)
-            area, bnd, ibb = lattice.add_obstacle(obstacles[i])
-            obstacles[i].fill(area, bnd, ibb)
+            self.add_obstacle(lattice, obstacles[i], (i+1))
 
     ### Iteration printings
     def printings(self, it):
