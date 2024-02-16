@@ -45,6 +45,7 @@ class interactive(base_app):
         self.latticeax   = None
         self.pausebutton = Button(self.buttonax, 'Start')
         self.clickhandle = self.plt.connect('button_press_event', self.on_fig_click)
+        self.scrhandle   = self.plt.connect('scroll_event', self.on_fig_scroll)
         self.lat         = None
 
 
@@ -52,7 +53,8 @@ class interactive(base_app):
         self.compute_lbm_parameters()
 
         # Obstacles
-        radius         = 0.5
+        self.obsradius = 0.2
+        self.obssize   = plt.text(-2.5, 0, "Obstacle size: "+str(self.obsradius))
         self.obstacles = []
 
     def on_click(self, event):
@@ -62,11 +64,21 @@ class interactive(base_app):
         else:
             self.pausebutton.label.set_text("Continue")
             
+    def on_fig_scroll(self, event):
+        if not self.running:
+            if event.button == 'up':
+                self.obsradius += 0.05
+                if(self.obsradius > 1):
+                    self.obsradius = 1
+            if event.button == 'down':
+                self.obsradius -= 0.05
+                if(self.obsradius < 0.01):
+                    self.obsradius = 0.1
+            self.obssize.set_text("Obstacle size: "+str(round(self.obsradius,2)))
+                
     def on_fig_click(self, event):
-        print("fig click")
         if not self.running:
             if event.button is MouseButton.RIGHT:
-                radius = 0.5
                 xran = self.x_max - self.x_min
                 yran = self.y_max - self.y_min
                 size = [640, 480] #plt.figure().get_size_inches()*plt.figure().dpi
@@ -74,7 +86,7 @@ class interactive(base_app):
                 pos = [self.x_min + pos[0]*xran, self.y_min +pos[1]*yran]
 
                 obs = obstacle('interactive'+str(len(self.obstacles)), 4, 100,
-                            'square', 0.1, pos)
+                            'square', self.obsradius, pos)
                 self.obstacles.append(obs)
 
                 self.add_obstacle(self.lat, obs, len(self.obstacles))
