@@ -168,6 +168,7 @@ class lattice:
         # +y     = bottom-top
         # origin = bottom left
         self.lattice = np.zeros((self.nx, self.ny))
+        self.concentrations = np.zeros((self.nx, self.ny))
         self.boundaries = np.zeros((self.nx, self.ny))
 
         # Physical fields

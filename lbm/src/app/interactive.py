@@ -156,6 +156,8 @@ class interactive(base_app):
         lattice.u_bot[0,:]   = 0.0
         lattice.u_right[1,:] = 0.0
         lattice.rho_right[:] = self.rho_lbm
+        
+        lattice.concentrations[10, int(ly/2)] += 0.1 # WWTP inlet
 
     ### Set boundary conditions
     def set_bc(self, lattice):
@@ -182,19 +184,23 @@ class interactive(base_app):
 
         # Output field
         v = np.sqrt(lattice.u[0,:,:]**2+lattice.u[1,:,:]**2)
+        concdisplay = lattice.concentrations
 
         # Mask obstacles
-        v[np.where(lattice.lattice > 0.0)] = -1.0
-        vm = np.ma.masked_where((v < 0.0), v)
-        vm = np.rot90(vm)
+        #v[np.where(lattice.lattice > 0.0)] = -1.0
+        concdisplay[np.where(lattice.lattice > 0.0)] = -1.0
+        concm = np.ma.masked_where((concdisplay < 0.0), concdisplay)
+        concm = np.rot90(concm)
+        #vm = np.ma.masked_where((v < 0.0), v)
+        #vm = np.rot90(vm)
 
         # Plot
         cmap = matplotlib.cm.RdBu_r
         cmap.set_bad(color='white')
-        self.plt.imshow(vm,
+        self.plt.imshow(concm,
                cmap = cmap,
-               vmin = 0.0*lattice.u_lbm,
-               vmax = 1.5*lattice.u_lbm,
+               vmin = 0.0, #0.0*lattice.u_lbm,
+               vmax = 100.0, #1.5*lattice.u_lbm,
                interpolation = 'spline16')
         
         
