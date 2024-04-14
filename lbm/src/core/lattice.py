@@ -155,6 +155,16 @@ class lattice:
         self.g       = np.zeros((self.q,  self.nx, self.ny))
         self.g_eq    = np.zeros((self.q,  self.nx, self.ny))
         self.g_up    = np.zeros((self.q,  self.nx, self.ny))
+        
+        # D2Q5 concentration items
+        self.dx_per_dt  = self.dx/self.dt
+        self.e_conc     = np.array([[0,0], self.dx_per_dt * np.array([np.cos(0), np.sin(0)]), self.dx_per_dt * np.array([np.cos(np.pi/2), np.sin(np.pi/2)]),
+                           self.dx_per_dt * np.array([np.cos(np.pi), np.sin(np.pi)]), self.dx_per_dt * np.array([np.cos(3*np.pi/2), np.sin(3*np.pi/2)])])
+        self.disp_coeff = 1.0
+        self.lambdas    = self.disp_coeff / (self.dt * (self.tau_lbm - 1/2) * self.dx_per_dt * self.dx_per_dt )
+        self.h          = 1
+        self.g_c_eq = np.zeros((5,  self.nx, self.ny))
+        self.concentrations = np.zeros((self.nx, self.ny))
 
         # Boundary conditions
         self.u_left     = np.zeros((2, self.ny))
@@ -168,7 +178,6 @@ class lattice:
         # +y     = bottom-top
         # origin = bottom left
         self.lattice = np.zeros((self.nx, self.ny))
-        self.concentrations = np.zeros((self.nx, self.ny))
         self.boundaries = np.zeros((self.nx, self.ny))
 
         # Physical fields
@@ -195,6 +204,15 @@ class lattice:
     def equilibrium(self):
 
         nb_equilibrium(self.u, self.c, self.w, self.rho, self.g_eq)
+        
+        # using dx_per_dt for both e_x and e_y, as they are equal here
+        self.g_c_eq[0,:,:] = 1.0 - (self.lambdas * self.dx_per_dt**2 + self.lambdas * self.dx_per_dt**2)/self.dx_per_dt**2
+        self.g_c_eq[1,:,:] = (1/2 * (self.dx_per_dt / self.dx_per_dt) * self.lambdas + (self.e_conc[1,0] * self.u[0,:,:])/(2*self.dx_per_dt**2) ) * self.rho
+        self.g_c_eq[2,:,:] = (1/2 * (self.dx_per_dt / self.dx_per_dt) * self.lambdas + (self.e_conc[2,1] * self.u[1,:,:])/(2*self.dx_per_dt**2) ) * self.rho
+        self.g_c_eq[3,:,:] = (1/2 * (self.dx_per_dt / self.dx_per_dt) * self.lambdas + (self.e_conc[3,0] * self.u[0,:,:])/(2*self.dx_per_dt**2) ) * self.rho
+        self.g_c_eq[4,:,:] = (1/2 * (self.dx_per_dt / self.dx_per_dt) * self.lambdas + (self.e_conc[4,1] * self.u[1,:,:])/(2*self.dx_per_dt**2) ) * self.rho
+        
+
 
     ### ************************************************
     ### Collision and streaming
