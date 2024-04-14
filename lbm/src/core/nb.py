@@ -76,7 +76,7 @@ def nb_drag_lift(boundary, ns, c, g_up, g, R_ref, U_ref, L_ref):
 ### Obstacle halfway bounce-back no-slip b.c.
 @njit(parallel=True,cache=True,nogil=True)
 def nb_bounce_back_obstacle(IBB, boundary, ns, sc,
-                            obs_ibb, g_up, g, u, lattice):
+                            obs_ibb, g_up, g, u, lattice, concentrations):
 
     # Interpolated BB
     if (IBB):
@@ -94,6 +94,13 @@ def nb_bounce_back_obstacle(IBB, boundary, ns, sc,
 
             p  = obs_ibb[k]
             pp = 2.0*p
+            
+            concentrations[i,j] = 0
+            concentrations[i-1,j] = 0
+            concentrations[i+1,j] = 0
+            concentrations[i,j-1] = 0
+            concentrations[i,j+1] = 0
+            
             if (p < 0.5):
                 g[qb,i,j] = (p*(pp+1.0)*g_up[q,i,j]
                              + (1.0+pp)*(1.0-pp)*g_up[q,im,jm]
@@ -115,6 +122,11 @@ def nb_bounce_back_obstacle(IBB, boundary, ns, sc,
             jj = j + c[1]
 
             g[qb,i,j] = g_up[q,i,j]
+            concentrations[i,j] = 0
+            concentrations[i-1,j] = 0
+            concentrations[i+1,j] = 0
+            concentrations[i,j-1] = 0
+            concentrations[i,j+1] = 0
 
 ### ************************************************
 ### Zou-He left wall velocity b.c.

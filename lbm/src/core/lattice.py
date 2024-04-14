@@ -160,11 +160,13 @@ class lattice:
         self.dx_per_dt  = self.dx/self.dt
         self.e_conc     = np.array([[0,0], self.dx_per_dt * np.array([np.cos(0), np.sin(0)]), self.dx_per_dt * np.array([np.cos(np.pi/2), np.sin(np.pi/2)]),
                            self.dx_per_dt * np.array([np.cos(np.pi), np.sin(np.pi)]), self.dx_per_dt * np.array([np.cos(3*np.pi/2), np.sin(3*np.pi/2)])])
-        self.disp_coeff = 1.0
+        self.disp_coeff = 0.5
         self.lambdas    = self.disp_coeff / (self.dt * (self.tau_lbm - 1/2) * self.dx_per_dt * self.dx_per_dt )
         self.h          = 1
         self.g_c_eq = np.zeros((5,  self.nx, self.ny))
+        self.g_c_next = np.zeros((5,  self.nx, self.ny))
         self.concentrations = np.zeros((self.nx, self.ny))
+        self.c_eq_sums = np.zeros((self.nx, self.ny))
 
         # Boundary conditions
         self.u_left     = np.zeros((2, self.ny))
@@ -206,11 +208,33 @@ class lattice:
         nb_equilibrium(self.u, self.c, self.w, self.rho, self.g_eq)
         
         # using dx_per_dt for both e_x and e_y, as they are equal here
-        self.g_c_eq[0,:,:] = 1.0 - (self.lambdas * self.dx_per_dt**2 + self.lambdas * self.dx_per_dt**2)/self.dx_per_dt**2
-        self.g_c_eq[1,:,:] = (1/2 * (self.dx_per_dt / self.dx_per_dt) * self.lambdas + (self.e_conc[1,0] * self.u[0,:,:])/(2*self.dx_per_dt**2) ) * self.rho
-        self.g_c_eq[2,:,:] = (1/2 * (self.dx_per_dt / self.dx_per_dt) * self.lambdas + (self.e_conc[2,1] * self.u[1,:,:])/(2*self.dx_per_dt**2) ) * self.rho
-        self.g_c_eq[3,:,:] = (1/2 * (self.dx_per_dt / self.dx_per_dt) * self.lambdas + (self.e_conc[3,0] * self.u[0,:,:])/(2*self.dx_per_dt**2) ) * self.rho
-        self.g_c_eq[4,:,:] = (1/2 * (self.dx_per_dt / self.dx_per_dt) * self.lambdas + (self.e_conc[4,1] * self.u[1,:,:])/(2*self.dx_per_dt**2) ) * self.rho
+        # self.g_c_eq[0,:,:] = (1.0 - (self.lambdas * self.dx_per_dt**2 + self.lambdas * self.dx_per_dt**2)/self.dx_per_dt**2)
+        # self.g_c_eq[1,:,:] = (0.5 * (self.dx_per_dt / self.dx_per_dt) * self.lambdas + (self.e_conc[1,0] * self.u[0,:,:])/(2*self.dx_per_dt**2) )
+        # self.g_c_eq[2,:,:] = (0.5 * (self.dx_per_dt / self.dx_per_dt) * self.lambdas + (self.e_conc[2,1] * self.u[1,:,:])/(2*self.dx_per_dt**2) )
+        # self.g_c_eq[3,:,:] = (0.5 * (self.dx_per_dt / self.dx_per_dt) * self.lambdas + (self.e_conc[3,0] * self.u[0,:,:])/(2*self.dx_per_dt**2) )
+        # self.g_c_eq[4,:,:] = (0.5 * (self.dx_per_dt / self.dx_per_dt) * self.lambdas + (self.e_conc[4,1] * self.u[1,:,:])/(2*self.dx_per_dt**2) )
+        self.c_eq_sums[:,:] # = np.sum(np.absolute(self.g_c_eq[:,:,:]), axis=0)
+        
+        self.c_eq_sums[:,:] = 0.01 + self.g[1,:,:] + self.g[2,:,:] + self.g[3,:,:] + self.g[4,:,:]
+        self.g_c_next[0,:,:] = 0.01 / self.c_eq_sums[:,:] * self.concentrations[:,:]
+        self.g_c_next[1,:,:] = self.g[1,:,:]  / self.c_eq_sums[:,:] * self.concentrations[:,:]
+        self.g_c_next[2,:,:] = self.g[2,:,:]  / self.c_eq_sums[:,:] * self.concentrations[:,:]
+        self.g_c_next[3,:,:] = self.g[3,:,:]  / self.c_eq_sums[:,:] * self.concentrations[:,:]
+        self.g_c_next[4,:,:] = self.g[4,:,:]  / self.c_eq_sums[:,:] * self.concentrations[:,:]
+        
+        # for q in range(0,5):
+        #     self.g_c_eq[q,:,:] = self.g_c_eq[q,:,:] / self.c_eq_sums[:,:] * self.concentrations[:,:]
+        print(self.c_eq_sums[12,100])
+        print(self.concentrations[12,100])
+        
+        # self.g_c_next = np.zeros((5,  self.nx, self.ny))
+        self.concentrations[:,:] = self.g_c_next[0,:,:]
+        #self.concentrations = self.concentrations.clip(min=0)
+        self.concentrations[0:self.lx   ,:]         += self.g_c_next[1, 1:self.nx    ,   :]
+        self.concentrations[1:self.nx   ,:]         += self.g_c_next[2, 0:self.lx    ,   :]
+        self.concentrations[:           ,0:self.ly] += self.g_c_next[3, :            ,1:self.ny]
+        self.concentrations[:           ,1:self.ny] += self.g_c_next[4, :            ,0:self.ly]
+        
         
 
 
@@ -223,6 +247,7 @@ class lattice:
                    self.c, self.ns,
                    self.nx, self.ny,
                    self.lx, self.ly)
+        
 
     ### ************************************************
     ### Compute drag and lift
@@ -239,7 +264,7 @@ class lattice:
 
         nb_bounce_back_obstacle(self.IBB, obstacle.boundary,
                                 self.ns, self.c, obstacle.ibb,
-                                self.g_up, self.g, self.u, self.lattice)
+                                self.g_up, self.g, self.u, self.lattice, self.concentrations)
 
     ### ************************************************
     ### Zou-He left wall velocity b.c.

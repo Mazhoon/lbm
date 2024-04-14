@@ -157,7 +157,7 @@ class interactive(base_app):
         lattice.u_right[1,:] = 0.0
         lattice.rho_right[:] = self.rho_lbm
         
-        lattice.concentrations[10, int(ly/2)] += 0.1 # WWTP inlet
+        lattice.concentrations[10, int(ly/2)] += 1000 # WWTP inlet
 
     ### Set boundary conditions
     def set_bc(self, lattice):
