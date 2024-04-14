@@ -215,27 +215,32 @@ class lattice:
         # self.g_c_eq[4,:,:] = (0.5 * (self.dx_per_dt / self.dx_per_dt) * self.lambdas + (self.e_conc[4,1] * self.u[1,:,:])/(2*self.dx_per_dt**2) )
         self.c_eq_sums[:,:] # = np.sum(np.absolute(self.g_c_eq[:,:,:]), axis=0)
         
-        self.c_eq_sums[:,:] = 0.01 + self.g[1,:,:] + self.g[2,:,:] + self.g[3,:,:] + self.g[4,:,:]
-        self.g_c_next[0,:,:] = 0.01 / self.c_eq_sums[:,:] * self.concentrations[:,:]
+        self.c_eq_sums[:,:] = 0.051 + self.g[1,:,:] + self.g[2,:,:] + self.g[3,:,:] + self.g[4,:,:]
+        self.g_c_next[0,:,:] = 0.001 / self.c_eq_sums[:,:] * self.concentrations[:,:]
         self.g_c_next[1,:,:] = self.g[1,:,:]  / self.c_eq_sums[:,:] * self.concentrations[:,:]
-        self.g_c_next[2,:,:] = self.g[2,:,:]  / self.c_eq_sums[:,:] * self.concentrations[:,:]
+        self.g_c_next[2,:,:] = (self.g[2,:,:] + 0.05)  / self.c_eq_sums[:,:] * self.concentrations[:,:]
         self.g_c_next[3,:,:] = self.g[3,:,:]  / self.c_eq_sums[:,:] * self.concentrations[:,:]
         self.g_c_next[4,:,:] = self.g[4,:,:]  / self.c_eq_sums[:,:] * self.concentrations[:,:]
         
         # for q in range(0,5):
         #     self.g_c_eq[q,:,:] = self.g_c_eq[q,:,:] / self.c_eq_sums[:,:] * self.concentrations[:,:]
-        print(self.c_eq_sums[12,100])
-        print(self.concentrations[12,100])
+        # print(self.g[0,12,100])
+        # print(self.g[1,12,100])
+        # print(self.g[2,12,100])
+        # print(self.g[3,12,100])
+        # print(self.g[4,12,100])
+        # print(self.c_eq_sums[12,100])
+        # print(self.concentrations[12,100])
         
         # self.g_c_next = np.zeros((5,  self.nx, self.ny))
         self.concentrations[:,:] = self.g_c_next[0,:,:]
-        #self.concentrations = self.concentrations.clip(min=0)
         self.concentrations[0:self.lx   ,:]         += self.g_c_next[1, 1:self.nx    ,   :]
         self.concentrations[1:self.nx   ,:]         += self.g_c_next[2, 0:self.lx    ,   :]
         self.concentrations[:           ,0:self.ly] += self.g_c_next[3, :            ,1:self.ny]
         self.concentrations[:           ,1:self.ny] += self.g_c_next[4, :            ,0:self.ly]
         
         
+        self.concentrations = self.concentrations.clip(min=0)
 
 
     ### ************************************************

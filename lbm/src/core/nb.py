@@ -95,16 +95,20 @@ def nb_bounce_back_obstacle(IBB, boundary, ns, sc,
             p  = obs_ibb[k]
             pp = 2.0*p
             
+            
+            # concentrations[i-1,j] = 0
+            # concentrations[i+1,j] = 0
+            # concentrations[i,j-1] = 0
+            # concentrations[i,j+1] = 0
+            
+            concentrations[im,jm] += concentrations[i,j]
             concentrations[i,j] = 0
-            concentrations[i-1,j] = 0
-            concentrations[i+1,j] = 0
-            concentrations[i,j-1] = 0
-            concentrations[i,j+1] = 0
             
             if (p < 0.5):
                 g[qb,i,j] = (p*(pp+1.0)*g_up[q,i,j]
                              + (1.0+pp)*(1.0-pp)*g_up[q,im,jm]
                              - p*(1.0-pp)*g_up[q,imm,jmm])
+                
             else:
                 g[qb,i,j] = ((1.0/(p*(pp+1.0)))*g_up[q,i,j] +
                              ((pp-1.0)/p)*g_up[qb,i,j] +
@@ -122,11 +126,6 @@ def nb_bounce_back_obstacle(IBB, boundary, ns, sc,
             jj = j + c[1]
 
             g[qb,i,j] = g_up[q,i,j]
-            concentrations[i,j] = 0
-            concentrations[i-1,j] = 0
-            concentrations[i+1,j] = 0
-            concentrations[i,j-1] = 0
-            concentrations[i,j+1] = 0
 
 ### ************************************************
 ### Zou-He left wall velocity b.c.
